@@ -1,0 +1,47 @@
+#!/usr/bin/php
+<?php
+# Copyright (c) 2009-2020 Mikkel Mikjaer Christensen
+# 
+# Distributed under the most recent GNU GPL Licenae
+#
+# You need the following line in your sudoers
+# nagios ALL = NOPASSWD: /usr/sbin/hpacucli
+# 
+	$result = array();
+	$result["ok"] = 0;
+	$result["fail"] = 0;
+	$err = 0;
+        $alles_ok=true;
+	exec("sudo hpacucli ctrl all show config",$o,$r);
+	if ($r != 0)
+	{
+		print "WARNING: Could not execute hpacucli\n";
+		die(1);
+	}
+
+	foreach ($o as $l)
+        {
+              if (preg_match("/physicaldrive/",$l))
+              {
+                   if (preg_match("/OK/",$l))
+                   {
+                         $result["ok"]++;
+                   } else {
+                         $result["fail"]++;
+                         $alles_ok=false;
+                   	$err=substr($l,strrpos($l,",")+1,-1);
+		   }
+              }
+        }
+        if ($alles_ok)
+        {
+                print "OK: Alt er godt\n\n";
+        	die(0);
+	} else {
+                print "CRITIAL: ".$result["fail"]." failed out of ".($result["ok"]+$result["fail"])." disks. Last failmsg:$err\n";
+        	die(2);
+	}
+?>
+
+
+
